@@ -10,8 +10,12 @@
 </head>
 <body>
   <section class="gh-login">
-    <p class="gh-login__cta">Zaloguj się przez GitHub</p>
-    <button class="gh-login__button">Logowanie</button>
+    <% if (!loggedIn) { %>
+      <p class="gh-login__cta">Zaloguj się przez GitHub</p>
+      <a class="gh-login__button" href="/auth/github">Logowanie</a>
+    <% } else { %>
+      <p class="gh-login__cta">Zalogowany jako <%= user %></p>
+    <% } %>
   </section>
   <section class="create">
     <img class="create__img" src="assets/vote.png" />

@@ -1,33 +1,33 @@
-const express = require('express')
 const path = require('path')
-const passport = require('passport')
-const { Strategy: GitHubStrategy} = require('passport-github')
-
-passport.use(new GitHubStrategy(
-  {
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "https://warsawjs-topics-test.herokuapp.com/auth/github/callback"
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    console.log(profile)
-    return cb(profile)
-  })
-)
+const express = require('express')
+const session = require('express-session')
+const bodyParser = require('body-parser')
+const { passport } = require('./passport')
 
 const app = express()
 
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 app.use(express.static(path.join(__dirname, 'public')))
+app.use(session({
+  secret: process.env.SECRET || 'cats',
+  resave: false,
+  saveUninitialized: false,
+}))
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(passport.initialize())
+app.use(passport.session())
 
 app.get('/', function (req, res) {
-  res.render('index')
+  res.render('index', {
+    loggedIn: !!req.user,
+    user: req.user && req.user.displayName
+  })
 })
 
 app.get(
   '/auth/github',
-  passport.authenticate('github')
+  passport.authenticate('github', { scope: [ 'user:email' ] })
 )
 
 app.get(
@@ -37,5 +37,10 @@ app.get(
     res.redirect('/')
   }
 )
+
+app.use(function (err, req, res, next) {
+  console.error(err)
+  next(err)
+})
 
 app.listen(process.env.PORT || 4000)
